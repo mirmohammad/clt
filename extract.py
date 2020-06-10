@@ -6,7 +6,7 @@ from torchvision import models
 from torchvision import transforms
 from tqdm import tqdm
 
-from CltDataset import CltDataset
+from data import CLT
 
 # ------------------------------------ CUDA Setup ----------------------------------------------------------------------
 
