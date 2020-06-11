@@ -1,8 +1,10 @@
 import os
+import random
 
 import pandas as pd
 from PIL import Image
 from torch.utils import data
+from torchvision.transforms import functional as tf
 
 from utils import draw
 
@@ -29,14 +31,22 @@ class CLT(data.Dataset):
         image, label = self.dataset[idx]
 
         image = Image.open(image)
+        label = label // 4
         label[1] += 70
         label[3] += 70
         label[5] += 70
-        label = label.astype('float32') / 5.714285714
         trisg = draw.get_triangle(label)
 
         if self.transform:
+            image = tf.pad(image, (0, 70))
+            trisg = tf.pad(trisg, (0, 70))
+            if random.random() > 0.5:
+                image = tf.vflip(image)
+                trisg = tf.vflip(trisg)
+                label[1] = 319 - label[1]
+                label[3] = 319 - label[3]
+                label[5] = 319 - label[5]
             image = self.transform(image)
             trisg = self.transform(trisg)
 
-        return image, label, trisg
+        return image, label.astype('float32'), trisg

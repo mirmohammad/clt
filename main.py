@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 from torch.backends import cudnn
 from torch.utils import data
-from torchvision import models
 from torchvision import transforms
 from tqdm import tqdm
 
@@ -19,6 +18,7 @@ parser.add_argument('dir', help='path to the dataset directory containing images
 parser.add_argument('-o', '--logs_dir', default='.', help='path to directory to store logs')
 parser.add_argument('-b', '--batch_size', default=32, type=int)
 parser.add_argument('-e', '--num_epochs', default=100, type=int)
+parser.add_argument('-a', '--aux_ratio', default=0.4, type=float)
 parser.add_argument('-l', '--learning_rate', default=1e-3, type=float)
 parser.add_argument('-m', '--momentum', default=0.9, type=float)
 parser.add_argument('-w', '--weight_decay', default=5e-4, type=float)
@@ -42,6 +42,7 @@ logs_dir = args.logs_dir
 # Training arguments
 batch_size = args.batch_size
 num_epochs = args.num_epochs
+aux_ratio = args.aux_ratio
 # Optimizer arguments
 learning_rate = args.learning_rate
 momentum = args.momentum
@@ -83,8 +84,6 @@ train_cows = cows[1:]
 valid_cows = cows[:1]
 
 transform = transforms.Compose([
-    transforms.Pad((0, 70)),
-    transforms.Resize(224),
     transforms.ToTensor()
 ])
 
@@ -94,7 +93,7 @@ valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, transform=transform)
 train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-criterion = nn.MSELoss()
+out_criterion = nn.MSELoss()
 seg_criterion = nn.CrossEntropyLoss()
 # model = models.wide_resnet50_2(pretrained=False, num_classes=out_size).to(device)
 model = SegNet(num_classes=2).to(device)
@@ -121,14 +120,14 @@ def iterate(ep, mode):
     monitor = tqdm(loader, desc=mode)
     for img, lbl, tri in monitor:
         seg, out = model(img.to(device))
-        loss = criterion(out, lbl.to(device))
+        out_loss = out_criterion(out, lbl.to(device))
         seg_loss = seg_criterion(seg, tri.long().squeeze(1).to(device))
+
+        loss = out_loss + aux_ratio * seg_loss
 
         num_samples += lbl.size(0)
         run_loss += loss.item() * lbl.size(0)
         run_err += ((out.detach().cpu() - lbl) ** 2).view(-1, 3, 2).sum(2).sqrt().sum(0)
-
-        loss += seg_loss
 
         if mode == 'train':
             optimizer.zero_grad()
