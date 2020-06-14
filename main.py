@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch.backends import cudnn
 from torch.utils import data
 from torchvision import transforms
+from torchvision import models
 from tqdm import tqdm
 
 from data import CLT
@@ -25,6 +26,8 @@ parser.add_argument('-w', '--weight_decay', default=5e-4, type=float)
 parser.add_argument('-r', '--random_seed', default=42)
 parser.add_argument('-x', '--manual_seed', action='store_true')
 parser.add_argument('-g', '--gpu', default='0', type=str)
+parser.add_argument('--vflip', action='store_true')
+parser.add_argument('--hflip', action='store_true')
 parser.add_argument('--step_lr', action='store_true')
 parser.add_argument('--multi_lr', action='store_true')
 parser.add_argument('--skd_step', default=25, type=int)
@@ -51,6 +54,9 @@ weight_decay = args.weight_decay
 random_seed = args.random_seed
 manual_seed = args.manual_seed
 gpu = args.gpu
+# Augmentation arguments
+vflip = args.vflip
+hflip = args.hflip
 # Scheduler arguments
 step_lr = args.step_lr
 multi_lr = args.multi_lr
@@ -94,9 +100,9 @@ train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=Tru
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
 out_criterion = nn.MSELoss()
-seg_criterion = nn.CrossEntropyLoss()
-# model = models.wide_resnet50_2(pretrained=False, num_classes=out_size).to(device)
-model = SegNet(num_classes=2).to(device)
+# seg_criterion = nn.CrossEntropyLoss()
+model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
+# model = SegNet(num_classes=2).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
@@ -118,12 +124,12 @@ def iterate(ep, mode):
     run_err = torch.zeros(3)
 
     monitor = tqdm(loader, desc=mode)
-    for img, lbl, tri in monitor:
-        seg, out = model(img.to(device))
-        out_loss = out_criterion(out, lbl.to(device))
-        seg_loss = seg_criterion(seg, tri.long().squeeze(1).to(device))
+    for img, lbl in monitor:
+        out = model(img.to(device))
+        loss = out_criterion(out, lbl.to(device))
+        # seg_loss = seg_criterion(seg, tri.long().squeeze(1).to(device))
 
-        loss = out_loss + aux_ratio * seg_loss
+        # loss = out_loss + aux_ratio * seg_loss
 
         num_samples += lbl.size(0)
         run_loss += loss.item() * lbl.size(0)
