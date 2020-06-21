@@ -6,8 +6,6 @@ from PIL import Image
 from torch.utils import data
 from torchvision.transforms import functional as tf
 
-from utils import draw
-
 
 class CLT(data.Dataset):
 
