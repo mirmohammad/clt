@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from data import CLT
 from model import SegNet
+from model import MyModel, MyModel2, MyModel3, MyModel4, MyModel5
 
 parser = argparse.ArgumentParser(description="CLT | Cow's Location Tracking Project (ETS/McGill)")
 parser.add_argument('dir', help='path to the dataset directory containing images and labels')
@@ -101,8 +102,9 @@ valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=Fal
 
 out_criterion = nn.MSELoss()
 # seg_criterion = nn.CrossEntropyLoss()
-model = models.resnet50(pretrained=False, num_classes=out_size).to(device)
+# model = models.resnet50(pretrained=False, num_classes=out_size).to(device)
 # model = SegNet(num_classes=2).to(device)
+model = MyModel5().to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
