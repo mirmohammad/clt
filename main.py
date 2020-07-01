@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from data import CLT
 from model import SegNet
-from model import MyModel, MyModel2, MyModel3, MyModel4, MyModel5
+from model import *
 
 parser = argparse.ArgumentParser(description="CLT | Cow's Location Tracking Project (ETS/McGill)")
 parser.add_argument('dir', help='path to the dataset directory containing images and labels')
@@ -91,6 +91,13 @@ train_cows = cows[1:]
 valid_cows = cows[:1]
 
 transform = transforms.Compose([
+    # transforms.RandomApply([
+    #     transforms.RandomChoice([
+    #         transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+    #         transforms.RandomGrayscale()
+    #     ]),
+    # ]),
+    # transforms.RandomGrayscale(),
     transforms.ToTensor()
 ])
 
@@ -101,10 +108,10 @@ train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=Tru
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
 out_criterion = nn.MSELoss()
-# seg_criterion = nn.CrossEntropyLoss()
-# model = models.resnet50(pretrained=False, num_classes=out_size).to(device)
+seg_criterion = nn.CrossEntropyLoss()
+# model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
 # model = SegNet(num_classes=2).to(device)
-model = MyModel5().to(device)
+model = MySegNet2().to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
@@ -126,12 +133,12 @@ def iterate(ep, mode):
     run_err = torch.zeros(3)
 
     monitor = tqdm(loader, desc=mode)
-    for img, lbl in monitor:
-        out = model(img.to(device))
-        loss = out_criterion(out, lbl.to(device))
-        # seg_loss = seg_criterion(seg, tri.long().squeeze(1).to(device))
+    for img, lbl, tri in monitor:
+        out, seg = model(img.to(device))
+        out_loss = out_criterion(out, lbl.to(device))
+        seg_loss = seg_criterion(seg, tri.squeeze(1).to(device))
 
-        # loss = out_loss + aux_ratio * seg_loss
+        loss = out_loss + aux_ratio * seg_loss
 
         num_samples += lbl.size(0)
         run_loss += loss.item() * lbl.size(0)

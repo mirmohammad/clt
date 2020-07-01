@@ -2,9 +2,11 @@ import os
 import random
 
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageDraw
 from torch.utils import data
 from torchvision.transforms import functional as tf
+
+from utils import draw
 
 
 class CLT(data.Dataset):
@@ -13,6 +15,9 @@ class CLT(data.Dataset):
         self.vflip = vflip
         self.hflip = hflip
         self.transform = transform
+
+        # self.grid_w = [x * 5 for x in range(1, 64)]
+        # self.grid_h = [x * 5 for x in range(1, 36)]
 
         images = [os.path.join(root_dir, 'images', x) for x in cows]
         images = [sorted([os.path.join(x, y) for y in os.listdir(x)]) for x in images]
@@ -31,11 +36,19 @@ class CLT(data.Dataset):
         image, label = self.dataset[idx]
 
         image = Image.open(image)
+
+        # draw = ImageDraw.Draw(image)
+        # for x in self.grid_w:
+        #     draw.line([x, 0, x, 179], fill=128, width=0)
+        #
+        # for y in self.grid_h:
+        #     draw.line([0, y, 319, y], fill=128, width=0)
+
         # label = label / 4.
         # label[1] += 70
         # label[3] += 70
         # label[5] += 70
-        # trisg = draw.get_triangle(label)
+        trngl = draw.get_triangle(label)
 
         if self.transform:
             # image = tf.pad(image, (0, 70))
@@ -55,6 +68,6 @@ class CLT(data.Dataset):
             #         label[2] = 319 - label[2]
             #         label[4] = 319 - label[4]
             image = self.transform(image)
-            # trisg = self.transform(trisg)
+            trngl = self.transform(trngl)
 
-        return image, label  # , trisg
+        return image, label, trngl.long()

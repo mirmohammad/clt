@@ -19,6 +19,7 @@ class BasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes)
+        self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
 
@@ -85,8 +86,22 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.inplanes = 64
         self.dilation = 1
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
-        self.bn1 = nn.BatchNorm2d(self.inplanes)
+        self.conv1_h = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=(11, 3), stride=(5, 1), padding=(3, 1), dilation=1, bias=False),
+            nn.BatchNorm2d(32),
+        )
+        # 320 x 36
+        self.conv1_w = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=(3, 11), stride=(1, 5), padding=(1, 3), dilation=1, bias=False),
+            nn.BatchNorm2d(32),
+        )
+        # 64 x 180
+        self.pool1_w = nn.MaxPool2d(kernel_size=(1, 5), stride=(1, 5), padding=0, dilation=1)
+        # 64 x 36
+        self.pool1_h = nn.MaxPool2d(kernel_size=(5, 1), stride=(5, 1), padding=0, dilation=1)
+        # 64 x 36
+        # self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        # self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -119,10 +134,11 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def _forward_impl(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
+        x = torch.cat((self.pool1_w(self.relu(self.conv1_h(x))), self.pool1_h(self.relu(self.conv1_w(x)))), dim=1)
+        # x = self.conv1(x)
+        # x = self.bn1(x)
+        # x = self.relu(x)
+        # x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
