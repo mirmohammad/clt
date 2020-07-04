@@ -11,7 +11,8 @@ from utils import draw
 
 class CLT(data.Dataset):
 
-    def __init__(self, root_dir, cows, vflip=False, hflip=False, transform=None):
+    def __init__(self, root_dir, cows, segment=False, vflip=False, hflip=False, transform=None):
+        self.segment = segment
         self.vflip = vflip
         self.hflip = hflip
         self.transform = transform
@@ -48,26 +49,31 @@ class CLT(data.Dataset):
         # label[1] += 70
         # label[3] += 70
         # label[5] += 70
-        trngl = draw.get_triangle(label)
 
-        if self.transform:
-            # image = tf.pad(image, (0, 70))
-            # trisg = tf.pad(trisg, (0, 70))
-            # if self.vflip:
-            #     if random.random() > 0.5:
-            #         image = tf.vflip(image)
-            #         # trisg = tf.vflip(trisg)
-            #         label[1] = 179 - label[1]
-            #         label[3] = 179 - label[3]
-            #         label[5] = 179 - label[5]
-            # if self.hflip:
-            #     if random.random() > 0.5:
-            #         image = tf.hflip(image)
-            #         # trisg = tf.vflip(trisg)
-            #         label[0] = 319 - label[0]
-            #         label[2] = 319 - label[2]
-            #         label[4] = 319 - label[4]
-            image = self.transform(image)
-            trngl = self.transform(trngl)
+        if self.segment:
+            trngl = draw.get_triangle(label)
+            if self.transform:
+                image = self.transform(image)
+                trngl = self.transform(trngl)
+            return image, label, trngl.long()
+        else:
+            if self.transform:
+                image = self.transform(image)
+            return image, label
 
-        return image, label, trngl.long()
+# image = tf.pad(image, (0, 70))
+# trisg = tf.pad(trisg, (0, 70))
+# if self.vflip:
+#     if random.random() > 0.5:
+#         image = tf.vflip(image)
+#         # trisg = tf.vflip(trisg)
+#         label[1] = 179 - label[1]
+#         label[3] = 179 - label[3]
+#         label[5] = 179 - label[5]
+# if self.hflip:
+#     if random.random() > 0.5:
+#         image = tf.hflip(image)
+#         # trisg = tf.vflip(trisg)
+#         label[0] = 319 - label[0]
+#         label[2] = 319 - label[2]
+#         label[4] = 319 - label[4]
