@@ -101,8 +101,8 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-train_dataset = CLT(root_dir=root_dir, cows=train_cows, segment=False, transform=transform)
-valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, segment=False, transform=transform)
+train_dataset = CLT(root_dir=root_dir, cows=train_cows, segment=True, transform=transform)
+valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, segment=True, transform=transform)
 
 train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
@@ -111,7 +111,7 @@ out_criterion = nn.MSELoss()
 seg_criterion = nn.CrossEntropyLoss()
 # model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
 # model = SegNet(num_classes=2).to(device)
-model = MyNet2().to(device)
+model = MySegNet3().to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
@@ -133,12 +133,12 @@ def iterate(ep, mode):
     run_err = torch.zeros(3)
 
     monitor = tqdm(loader, desc=mode)
-    for img, lbl in monitor:
-        out = model(img.to(device))
-        loss = out_criterion(out, lbl.to(device))
+    for img, lbl, tri in monitor:
+        out, seg = model(img.to(device))
+        out_loss = out_criterion(out, lbl.to(device))
+        seg_loss = seg_criterion(seg, tri.squeeze(1).to(device))
 
-        # seg_loss = seg_criterion(seg, tri.squeeze(1).to(device))
-        # loss = out_loss + aux_ratio * seg_loss
+        loss = out_loss + aux_ratio * seg_loss
 
         num_samples += lbl.size(0)
         run_loss += loss.item() * lbl.size(0)

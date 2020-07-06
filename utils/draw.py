@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 
 
-def get_triangle(points, dim=(320, 180)):
+def get_triangle(points, dim=(160, 90)):
     triangle = Image.new('1', dim)
     drawer = ImageDraw.Draw(triangle)
     # x0 y0 x1 y1 x2 y2

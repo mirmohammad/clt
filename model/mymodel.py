@@ -1159,6 +1159,7 @@ class MySegNet1(nn.Module):
         return y, x
 
 
+# 3.08 (Epoch 82)
 class MySegNet2(nn.Module):
 
     def __init__(self, num_classes=21):
@@ -1408,6 +1409,414 @@ class MySegNet2(nn.Module):
         x = self.relu(x)
         x = self.deconv41(x)
         x = self.relu(x)
+
+        x = self.unpool3(x, indices=idx3)
+        uid3 = x
+        x = self.deconv32(x)
+        x += uid3
+        x = self.relu(x)
+        x = self.deconv31(x)
+        x = self.relu(x)
+
+        x = self.unpool2(x, indices=idx2)
+        uid2 = x
+        x = self.deconv22(x)
+        x += uid2
+        x = self.relu(x)
+        x = self.deconv21(x)
+        x = self.relu(x)
+
+        x = self.unpool1(x, indices=idx1)
+        uid1 = x
+        x = self.deconv12(x)
+        x += uid1
+        x = self.relu(x)
+        x = self.deconv11(x)
+        x = self.relu(x)
+
+        return y, x
+
+
+#
+class MySegNet3(nn.Module):
+
+    def __init__(self, num_classes=21):
+        super(MySegNet3, self).__init__()
+
+        self.relu = nn.ReLU(inplace=True)
+
+        kernel = [16, 32, 64, 128, 128]
+
+        # 320 x 180
+        self.conv11 = nn.Sequential(
+            nn.Conv2d(3, kernel[0], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[0]),
+        )
+        # 320 x 180
+        self.conv12 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[0], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[0]),
+        )
+        # 320 x 180
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, return_indices=True)
+        # 160 x 90
+        self.conv21 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 160 x 90
+        self.conv22 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 160 x 90
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, return_indices=True)
+        # 80 x 45
+        self.conv31 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.conv32 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.conv33 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.pool3 = nn.MaxPool2d(kernel_size=(3, 4), stride=(3, 4), padding=0, dilation=1, return_indices=True)
+        # 20 x 15
+        self.conv41 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.conv42 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.conv43 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.pool4 = nn.MaxPool2d(kernel_size=(3, 4), stride=(3, 4), padding=0, dilation=1, return_indices=True)
+        # 5 x 5
+
+        kernel = [128, 128, 64, 32, 16]
+
+        # 5 x 5
+        self.unpool4 = nn.MaxUnpool2d(kernel_size=(3, 4), stride=(3, 4), padding=0)
+        # 20 x 15
+        self.deconv43 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 20 x 15
+        self.deconv42 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 20 x 15
+        self.deconv41 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 20 x 15
+        self.unpool3 = nn.MaxUnpool2d(kernel_size=(3, 4), stride=(3, 4), padding=0)
+        # 80 x 45
+        self.deconv32 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.deconv31 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 80 x 45
+        self.unpool2 = nn.MaxUnpool2d(kernel_size=2, stride=2, padding=0)
+        # 160 x 90
+        self.deconv22 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 160 x 90
+        self.deconv21 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[4], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[4]),
+        )
+        # 160 x 90
+        self.unpool1 = nn.MaxUnpool2d(kernel_size=2, stride=2, padding=0)
+        # 320 x 180
+        self.deconv12 = nn.Sequential(
+            nn.Conv2d(kernel[4], kernel[4], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[4]),
+        )
+        # 320 x 180
+        self.deconv11 = nn.Sequential(
+            nn.Conv2d(kernel[4], 2, kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(2),
+        )
+        # 320 x 180
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(kernel[0], 6)
+
+    def forward(self, x):
+
+        x = self.conv11(x)
+        x = self.relu(x)
+        id1 = x
+        x = self.conv12(x)
+        x += id1
+        x = self.relu(x)
+        x, idx1 = self.pool1(x)
+
+        x = self.conv21(x)
+        x = self.relu(x)
+        id2 = x
+        x = self.conv22(x)
+        x += id2
+        x = self.relu(x)
+        x, idx2 = self.pool2(x)
+
+        x = self.conv31(x)
+        x = self.relu(x)
+        id3 = x
+        x = self.conv32(x)
+        x = self.relu(x)
+        x = self.conv33(x)
+        x += id3
+        x = self.relu(x)
+        x, idx3 = self.pool3(x)
+
+        x = self.conv41(x)
+        x = self.relu(x)
+        id4 = x
+        x = self.conv42(x)
+        x = self.relu(x)
+        x = self.conv43(x)
+        x += id4
+        x = self.relu(x)
+        x, idx4 = self.pool4(x)
+
+        # x = self.conv51(x)
+        # x = self.relu(x)
+        # id5 = x
+        # x = self.conv52(x)
+        # x = self.relu(x)
+        # x = self.conv53(x)
+        # x += id5
+        # x = self.relu(x)
+        # x, idx5 = self.pool5(x)
+
+        y = self.avgpool(x)
+        y = self.fc(y.squeeze())
+
+        # x = self.unpool5(x, indices=idx5)
+        # uid5 = x
+        # x = self.deconv53(x)
+        # x = self.relu(x)
+        # x = self.deconv52(x)
+        # x += uid5
+        # x = self.relu(x)
+        # x = self.deconv51(x)
+        # x = self.relu(x)
+
+        x = self.unpool4(x, indices=idx4)
+        uid4 = x
+        x = self.deconv43(x)
+        x = self.relu(x)
+        x = self.deconv42(x)
+        x += uid4
+        x = self.relu(x)
+        x = self.deconv41(x)
+        x = self.relu(x)
+
+        x = self.unpool3(x, indices=idx3)
+        uid3 = x
+        x = self.deconv32(x)
+        x += uid3
+        x = self.relu(x)
+        x = self.deconv31(x)
+        x = self.relu(x)
+
+        x = self.unpool2(x, indices=idx2)
+        uid2 = x
+        x = self.deconv22(x)
+        x += uid2
+        x = self.relu(x)
+        x = self.deconv21(x)
+        x = self.relu(x)
+
+        x = self.unpool1(x, indices=idx1)
+        uid1 = x
+        x = self.deconv12(x)
+        x += uid1
+        x = self.relu(x)
+        x = self.deconv11(x)
+        x = self.relu(x)
+
+        return y, x
+
+
+#
+class MySegNet4(nn.Module):
+
+    def __init__(self, num_classes=21):
+        super(MySegNet4, self).__init__()
+        self.relu = nn.ReLU(inplace=True)
+
+        kernel = [16, 32, 64, 128]
+
+        # 320 x 180
+        self.conv11 = nn.Sequential(
+            nn.Conv2d(3, kernel[0], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[0]),
+        )
+        # 320 x 180
+        self.conv12 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[0], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[0]),
+        )
+        # 320 x 180
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, return_indices=True)
+        # 160 x 90
+        self.conv21 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 160 x 90
+        self.conv22 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 160 x 90
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, return_indices=True)
+        # 80 x 45
+        self.conv31 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.conv32 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.conv33 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.pool3 = nn.MaxPool2d(kernel_size=(3, 4), stride=(3, 4), padding=0, dilation=1, return_indices=True)
+        # 20 x 15
+        self.conv41 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.conv42 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.conv43 = nn.Sequential(
+            nn.Conv2d(kernel[3], kernel[3], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[3]),
+        )
+        # 20 x 15
+        self.pool4 = nn.MaxPool2d(kernel_size=(3, 4), stride=(3, 4), padding=0, dilation=1, return_indices=True)
+        # 5 x 5
+
+        kernel = [128, 64, 32]
+
+        # 5 x 5
+        self.unpool3 = nn.MaxUnpool2d(kernel_size=(3, 4), stride=(3, 4), padding=0)
+        # 20 x 15
+        self.deconv32 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[0], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[0]),
+        )
+        # 20 x 15
+        self.deconv31 = nn.Sequential(
+            nn.Conv2d(kernel[0], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 20 x 15
+        self.unpool2 = nn.MaxUnpool2d(kernel_size=2, stride=2, padding=0)
+        # 80 x 45
+        self.deconv22 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[1]),
+        )
+        # 80 x 45
+        self.deconv21 = nn.Sequential(
+            nn.Conv2d(kernel[1], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 80 x 45
+        self.unpool1 = nn.MaxUnpool2d(kernel_size=2, stride=2, padding=0)
+        # 160 x 90
+        self.deconv12 = nn.Sequential(
+            nn.Conv2d(kernel[2], kernel[2], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(kernel[2]),
+        )
+        # 160 x 90
+        self.deconv11 = nn.Sequential(
+            nn.Conv2d(kernel[2], 2, kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
+            nn.BatchNorm2d(2),
+        )
+        # 160 x 90
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(kernel[0], 6)
+
+    def forward(self, x):
+
+        x = self.conv11(x)
+        x = self.relu(x)
+        id1 = x
+        x = self.conv12(x)
+        x += id1
+        x = self.relu(x)
+        x, idx1 = self.pool1(x)
+
+        x = self.conv21(x)
+        x = self.relu(x)
+        id2 = x
+        x = self.conv22(x)
+        x += id2
+        x = self.relu(x)
+        x, idx2 = self.pool2(x)
+
+        x = self.conv31(x)
+        x = self.relu(x)
+        id3 = x
+        x = self.conv32(x)
+        x = self.relu(x)
+        x = self.conv33(x)
+        x += id3
+        x = self.relu(x)
+        x, idx3 = self.pool3(x)
+
+        x = self.conv41(x)
+        x = self.relu(x)
+        id4 = x
+        x = self.conv42(x)
+        x = self.relu(x)
+        x = self.conv43(x)
+        x += id4
+        x = self.relu(x)
+        x, idx4 = self.pool4(x)
+
+        y = self.avgpool(x)
+        y = self.fc(y.squeeze())
 
         x = self.unpool3(x, indices=idx3)
         uid3 = x
