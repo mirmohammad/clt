@@ -111,7 +111,7 @@ out_criterion = nn.MSELoss()
 seg_criterion = nn.CrossEntropyLoss()
 # model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
 # model = SegNet(num_classes=2).to(device)
-model = MySegNet3().to(device)
+model = MySegNet4().to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:

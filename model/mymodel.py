@@ -1749,7 +1749,7 @@ class MySegNet4(nn.Module):
             nn.BatchNorm2d(kernel[1]),
         )
         # 20 x 15
-        self.unpool2 = nn.MaxUnpool2d(kernel_size=2, stride=2, padding=0)
+        self.unpool2 = nn.MaxUnpool2d(kernel_size=(3, 4), stride=(3, 4), padding=0)
         # 80 x 45
         self.deconv22 = nn.Sequential(
             nn.Conv2d(kernel[1], kernel[1], kernel_size=3, stride=1, padding=1, dilation=1, bias=False),
@@ -1818,7 +1818,7 @@ class MySegNet4(nn.Module):
         y = self.avgpool(x)
         y = self.fc(y.squeeze())
 
-        x = self.unpool3(x, indices=idx3)
+        x = self.unpool3(x, indices=idx4)
         uid3 = x
         x = self.deconv32(x)
         x += uid3
@@ -1826,7 +1826,7 @@ class MySegNet4(nn.Module):
         x = self.deconv31(x)
         x = self.relu(x)
 
-        x = self.unpool2(x, indices=idx2)
+        x = self.unpool2(x, indices=idx3)
         uid2 = x
         x = self.deconv22(x)
         x += uid2
@@ -1834,7 +1834,7 @@ class MySegNet4(nn.Module):
         x = self.deconv21(x)
         x = self.relu(x)
 
-        x = self.unpool1(x, indices=idx1)
+        x = self.unpool1(x, indices=idx2)
         uid1 = x
         x = self.deconv12(x)
         x += uid1

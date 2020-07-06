@@ -51,7 +51,7 @@ class CLT(data.Dataset):
         # label[5] += 70
 
         if self.segment:
-            trngl = draw.get_triangle(label)
+            trngl = draw.get_triangle(label / 2.)
             if self.transform:
                 image = self.transform(image)
                 trngl = self.transform(trngl)
