@@ -1,8 +1,9 @@
+import numpy as np
 from PIL import Image, ImageDraw
 
 
-def get_triangle(points, dim=(160, 90)):
-    triangle = Image.new('1', dim)
+def get_triangle(points, scale=1):
+    triangle = Image.new('1', (320 // scale, 180 // scale))
     drawer = ImageDraw.Draw(triangle)
     # x0 y0 x1 y1 x2 y2
     # radius = 5
@@ -21,9 +22,9 @@ def get_triangle(points, dim=(160, 90)):
     # drawer.ellipse([x_p0_tl, y_p0_tl, x_p0_br, y_p0_br], fill=1)
     # drawer.ellipse([x_p1_tl, y_p1_tl, x_p1_br, y_p1_br], fill=1)
     # drawer.ellipse([x_p2_tl, y_p2_tl, x_p2_br, y_p2_br], fill=1)
-    drawer.polygon(points, fill=1)
+    drawer.polygon((points / scale).tolist(), fill=1)
     # triangle.save('/home/mir/Desktop/1.png')
     return triangle
 
 
-# get_triangle([87,  94,  60, 136, 144, 152])
+# get_triangle(np.array([573, 243, 513, 505, 918, 461]) / 4., scale=1)

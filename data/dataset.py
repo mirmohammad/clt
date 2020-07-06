@@ -11,8 +11,9 @@ from utils import draw
 
 class CLT(data.Dataset):
 
-    def __init__(self, root_dir, cows, segment=False, vflip=False, hflip=False, transform=None):
-        self.segment = segment
+    def __init__(self, root_dir, cows, decode=False, scale=1, vflip=False, hflip=False, transform=None):
+        self.decode = decode
+        self.scale = scale
         self.vflip = vflip
         self.hflip = hflip
         self.transform = transform
@@ -50,12 +51,12 @@ class CLT(data.Dataset):
         # label[3] += 70
         # label[5] += 70
 
-        if self.segment:
-            trngl = draw.get_triangle(label / 2.)
+        if self.decode:
+            imseg = draw.get_triangle(label, scale=self.scale)
             if self.transform:
                 image = self.transform(image)
-                trngl = self.transform(trngl)
-            return image, label, trngl.long()
+                imseg = self.transform(imseg)
+            return image, label, imseg.long()
         else:
             if self.transform:
                 image = self.transform(image)

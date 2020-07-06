@@ -27,6 +27,8 @@ parser.add_argument('-w', '--weight_decay', default=5e-4, type=float)
 parser.add_argument('-r', '--random_seed', default=42)
 parser.add_argument('-x', '--manual_seed', action='store_true')
 parser.add_argument('-g', '--gpu', default='0', type=str)
+parser.add_argument('--decode', action='store_true')
+parser.add_argument('--channels', nargs='+', type=int)
 parser.add_argument('--vflip', action='store_true')
 parser.add_argument('--hflip', action='store_true')
 parser.add_argument('--step_lr', action='store_true')
@@ -55,6 +57,9 @@ weight_decay = args.weight_decay
 random_seed = args.random_seed
 manual_seed = args.manual_seed
 gpu = args.gpu
+# Model arguments
+decode = args.decode
+channels = args.channels
 # Augmentation arguments
 vflip = args.vflip
 hflip = args.hflip
@@ -72,8 +77,8 @@ if manual_seed:
     random.seed(random_seed)
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
-    torch.cuda.manual_seed(random_seed)
-    torch.cuda.manual_seed_all(random_seed)
+    # torch.cuda.manual_seed(random_seed)
+    # torch.cuda.manual_seed_all(random_seed)
     cudnn.benchmark = False
     cudnn.deterministic = True
 
@@ -101,8 +106,8 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-train_dataset = CLT(root_dir=root_dir, cows=train_cows, segment=True, transform=transform)
-valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, segment=True, transform=transform)
+train_dataset = CLT(root_dir=root_dir, cows=train_cows, decode=decode, scale=1, transform=transform)
+valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, decode=decode, scale=1, transform=transform)
 
 train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
@@ -110,8 +115,8 @@ valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=Fal
 out_criterion = nn.MSELoss()
 seg_criterion = nn.CrossEntropyLoss()
 # model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
-# model = SegNet(num_classes=2).to(device)
-model = MySegNet4().to(device)
+# model = MyModel11().to(device)
+model = SegNet(decode=decode, channels=channels).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
@@ -133,12 +138,17 @@ def iterate(ep, mode):
     run_err = torch.zeros(3)
 
     monitor = tqdm(loader, desc=mode)
-    for img, lbl, tri in monitor:
-        out, seg = model(img.to(device))
-        out_loss = out_criterion(out, lbl.to(device))
-        seg_loss = seg_criterion(seg, tri.squeeze(1).to(device))
-
-        loss = out_loss + aux_ratio * seg_loss
+    for it in monitor:
+        if decode:
+            img, lbl, tri = it
+            out, seg = model(img.to(device))
+            out_loss = out_criterion(out, lbl.to(device))
+            seg_loss = seg_criterion(seg, tri.squeeze(1).to(device))
+            loss = out_loss + aux_ratio * seg_loss
+        else:
+            img, lbl = it
+            out = model(img.to(device))
+            loss = out_criterion(out, lbl.to(device))
 
         num_samples += lbl.size(0)
         run_loss += loss.item() * lbl.size(0)
@@ -149,12 +159,7 @@ def iterate(ep, mode):
             loss.backward()
             optimizer.step()
 
-        monitor.set_postfix(
-            epoch=ep,
-            loss=run_loss / num_samples,
-            err=(run_err / num_samples).round().tolist(),
-            avg=run_err.mean().item() / num_samples
-        )
+        monitor.set_postfix(epoch=ep, loss=run_loss / num_samples, err=(run_err / num_samples).round().tolist(), avg=run_err.mean().item() / num_samples)
 
     return run_err / num_samples
 
