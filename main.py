@@ -8,12 +8,10 @@ import torch.nn as nn
 from torch.backends import cudnn
 from torch.utils import data
 from torchvision import transforms
-from torchvision import models
 from tqdm import tqdm
 
 from data import CLT
-from model import SegNet
-from model import *
+from model import segnet
 
 parser = argparse.ArgumentParser(description="CLT | Cow's Location Tracking Project (ETS/McGill)")
 parser.add_argument('dir', help='path to the dataset directory containing images and labels')
@@ -114,9 +112,7 @@ valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=Fal
 
 out_criterion = nn.MSELoss()
 seg_criterion = nn.CrossEntropyLoss()
-# model = models.resnet18(pretrained=False, num_classes=out_size).to(device)
-# model = MyModel11().to(device)
-model = SegNet(decode=decode, channels=channels).to(device)
+model = segnet.SegNet(channels=channels, decode=decode).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 if step_lr:
@@ -176,4 +172,5 @@ if __name__ == '__main__':
                 tqdm.write(f'NEW BEST VALIDATION | New Average {err.mean()} | Improvement {best_avg - err.mean()}')
                 best_avg = err.mean()
                 best_ep = epoch
+                torch.save(model.state_dict(), 'params_' + str(err.mean().item()) + '_' + str(err) + '_.pt')
             tqdm.write(f'Valid | Epoch {epoch} | Error {err.tolist()} | Best Average {best_avg} | Best Epoch {best_ep}')

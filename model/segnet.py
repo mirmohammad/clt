@@ -2,9 +2,10 @@ import torch.nn as nn
 
 
 class SegNet(nn.Module):
-    def __init__(self, decode=True, channels=(64, 128, 256, 512, 512)):
+    def __init__(self, channels, decode=True):
         super(SegNet, self).__init__()
-        channels = list(channels)
+        if channels is None:
+            channels = [64, 128, 256, 512, 512]
 
         self.decode = decode
         self.relu = nn.ReLU(inplace=True)
