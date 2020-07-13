@@ -92,7 +92,7 @@ class ResNet(nn.Module):
     def __init__(self, block, layers, num_classes=6):
         super(ResNet, self).__init__()
 
-        features = [32, 64, 128, 256]
+        features = [16, 32, 64, 64]
 
         self.inplanes = features[0]
 
@@ -113,27 +113,18 @@ class ResNet(nn.Module):
             nn.BatchNorm2d(self.inplanes // 2)
         )
 
-        self.conv1_hw = nn.Sequential(
-            nn.Conv2d(self.inplanes // 2, self.inplanes // 2, kernel_size=(1, 11), stride=(1, 5), padding=(0, 3), bias=False),
-            nn.BatchNorm2d(self.inplanes // 2)
-        )
-        self.conv1_wh = nn.Sequential(
-            nn.Conv2d(self.inplanes // 2, self.inplanes // 2, kernel_size=(11, 1), stride=(5, 1), padding=(3, 0), bias=False),
-            nn.BatchNorm2d(self.inplanes // 2)
-        )
-
         self.relu = nn.ReLU(inplace=True)
 
         # in -> 64 x 180 | out -> 64 x 36
-        # self.maxpool_h = nn.MaxPool2d(kernel_size=(5, 1), stride=(5, 1))
+        self.maxpool_h = nn.MaxPool2d(kernel_size=(5, 1), stride=(5, 1))
 
         # in -> 320 x 36 | out -> 64 x 36
-        # self.maxpool_w = nn.MaxPool2d(kernel_size=(1, 5), stride=(1, 5))
+        self.maxpool_w = nn.MaxPool2d(kernel_size=(1, 5), stride=(1, 5))
 
         self.layer1 = self._make_layer(block, features[0], layers[0])
         self.layer2 = self._make_layer(block, features[1], layers[1], stride=2)
         self.layer3 = self._make_layer(block, features[2], layers[2], stride=2)
-        self.layer4 = self._make_layer(block, features[3], layers[3], stride=2)
+        # self.layer4 = self._make_layer(block, features[3], layers[3], stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(features[3] * block.expansion, num_classes)
@@ -175,30 +166,20 @@ class ResNet(nn.Module):
         # x = self.relu(x)
         # x = self.maxpool(x)
 
-        # hw = self.conv1_h(x)
-        # hw = self.relu(hw)
-        # hw = self.maxpool_w(hw)
-        #
-        # wh = self.conv1_w(x)
-        # wh = self.relu(wh)
-        # wh = self.maxpool_h(wh)
-        #
-        # x = torch.cat((hw, wh), dim=1)
-
         hw = self.conv1_h(x)
         hw = self.relu(hw)
-        hw = self.conv1_hw(hw)
+        hw = self.maxpool_w(hw)
 
         wh = self.conv1_w(x)
         wh = self.relu(wh)
-        wh = self.conv1_wh(wh)
+        wh = self.maxpool_h(wh)
 
         x = torch.cat((hw, wh), dim=1)
 
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x)
+        # x = self.layer4(x)
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)

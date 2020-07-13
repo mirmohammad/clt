@@ -32,8 +32,8 @@ class SegNet(nn.Module):
 
         if self.decode:
             channels.reverse()
+            blocks.reverse()
 
-            blocks = [3, 3, 2, 2, 2]
             kernel = channels + [2]
 
             for i in range(len(blocks)):
