@@ -23,7 +23,6 @@ parser.add_argument('--num_epochs', default=100, type=int)
 parser.add_argument('--aux_ratio', default=0.4, type=float)
 parser.add_argument('--mse', action='store_true')
 parser.add_argument('--mae', action='store_true')
-parser.add_argument('--mse', action='store_true')
 # Optimizer arguments
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--momentum', default=0.9, type=float)
