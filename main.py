@@ -21,6 +21,9 @@ parser.add_argument('--logs_dir', default='.', help='path to directory to store 
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--num_epochs', default=100, type=int)
 parser.add_argument('--aux_ratio', default=0.4, type=float)
+parser.add_argument('--mse', action='store_true')
+parser.add_argument('--mae', action='store_true')
+parser.add_argument('--mse', action='store_true')
 # Optimizer arguments
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--momentum', default=0.9, type=float)
@@ -56,6 +59,8 @@ logs_dir = args.logs_dir
 batch_size = args.batch_size
 num_epochs = args.num_epochs
 aux_ratio = args.aux_ratio
+mse = args.mse
+mae = args.mae
 # Optimizer arguments
 learning_rate = args.learning_rate
 momentum = args.momentum
@@ -111,7 +116,13 @@ valid_dataset = CLT(root_dir=root_dir, cows=valid_cows, decode=decode, scale=1, 
 train_loader = data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 valid_loader = data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-out_criterion = nn.SmoothL1Loss()
+if mae:
+    out_criterion = nn.L1Loss()
+elif mse:
+    out_criterion = nn.MSELoss()
+else:
+    out_criterion = nn.SmoothL1Loss()
+
 seg_criterion = nn.CrossEntropyLoss()
 model = segnet.SegNet(channels=channels, decode=decode).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
@@ -157,6 +168,9 @@ def iterate(ep, mode):
             optimizer.step()
 
         monitor.set_postfix(epoch=ep, loss=run_loss / num_samples, err=(run_err / num_samples).round().tolist(), avg=run_err.mean().item() / num_samples)
+
+    if mode == 'train':
+        scheduler.step()
 
     return run_err / num_samples
 
