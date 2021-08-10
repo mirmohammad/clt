@@ -1,4 +1,37 @@
-dataset:
-  local: /media/mir/ml/data/mcgill/clt/s4/
-  remote: /export/livia/
-train:
+##############
+# DEF CONFIG #
+##############
+# default
+num_classes: 6
+num_workers: 4
+# data & log directories
+data_dir: /media/mir/ml/data/mcgill/clt/s4
+log_dir: ./log
+# training
+batch_size: 32
+num_epochs: 100
+# optimizer
+learning_rate: 1.0e-3
+momentum: 0.9
+weight_decay: 5.0e-4
+# lr scheduler
+step: 25
+gamma: 0.1
+# data augmentation
+random_vertical_flip: No
+random_horizontal_flip: No
+# random initialization
+random_seed: 42
+manual_seed: Yes
+# clt segmentation
+decode: No
+aux_loss: 0.4
+channels:
+  - 64
+  - 128
+  - 256
+  - 512
+  - 512
+##############
+# END CONFIG #
+##############

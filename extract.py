@@ -3,6 +3,7 @@ import os
 import torch
 from torch.utils import data
 from torchvision import transforms
+from torchvision import models
 from tqdm import tqdm
 
 from data import CLT
@@ -10,7 +11,7 @@ from model import segnet
 
 cuda = torch.cuda.is_available()
 
-root_dir = '/data/Databases/s4'
+root_dir = '/media/mir/ml/data/mcgill/clt/s4'
 decode = False
 batch_size = 32
 num_workers = 8
@@ -31,8 +32,11 @@ transform = transforms.Compose([
 datasets = [CLT(root_dir=root_dir, cows=[cows[i]], decode=False, scale=1, transform=transform) for i in range(len(cows))]
 loaders = [data.DataLoader(datasets[i], batch_size=batch_size, shuffle=False, num_workers=num_workers) for i in range(len(datasets))]
 
-model = segnet.SegNet(channels=channels, decode=decode)
-model.load_state_dict(torch.load('params_2.8041584491729736_tensor([2.1184, 2.5626, 3.7315])_.pt'))
+# model = segnet.SegNet(channels=channels, decode=decode)
+model = models.vgg11_bn(pretrained=False, num_classes=6)
+model.load_state_dict(
+    torch.load('/home/mir/clt/log/vgg11_bn/SmoothL1Loss/2020-10-26 02:46:00/_2.5603575706481934_[2.0741920471191406, 2.3640050888061523, 3.242875576019287]_.pt')
+)
 model = model.to(device)
 
 
