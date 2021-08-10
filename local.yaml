@@ -1,0 +1,4 @@
+dataset:
+  local: /media/mir/ml/data/mcgill/clt/s4/
+  remote: /export/livia/
+train:
